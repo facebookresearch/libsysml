@@ -5,4 +5,10 @@
 
 #pragma once
 
-#include "measure/measure.hpp"
+namespace sysml
+{
+
+using fp64 = double;
+static_assert(sizeof(fp64) == 8);
+
+} // namespace sysml

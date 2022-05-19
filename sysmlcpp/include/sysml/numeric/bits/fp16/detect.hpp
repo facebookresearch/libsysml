@@ -5,4 +5,10 @@
 
 #pragma once
 
-#include "measure/measure.hpp"
+#if defined(__aarch64__) && defined(__APPLE__) && defined(__clang__)
+#    define SYSML_HAS___Float16 1
+#endif
+
+#if defined(__aarch64__) && defined(__APPLE__) && defined(__GNUC__)
+#    define SYSML_HAS___fp16 1
+#endif

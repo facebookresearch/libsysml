@@ -9,14 +9,14 @@ set(header_files
 
 add_library(sysmlcpp INTERFACE)
 
-target_sources(type_safe
+target_sources(sysmlcpp
   INTERFACE
   "$<BUILD_INTERFACE:${header_files}>")
 
-target_include_directories(type_safe
+target_include_directories(sysmlcpp
   INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>)
 
-target_include_directories(type_safe
+target_include_directories(sysmlcpp
   SYSTEM INTERFACE
   $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>)

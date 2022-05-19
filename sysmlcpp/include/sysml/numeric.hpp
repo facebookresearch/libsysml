@@ -5,4 +5,8 @@
 
 #pragma once
 
-#include "measure/measure.hpp"
+#include "numeric/fp16.hpp"
+#include "numeric/fp32.hpp"
+#include "numeric/fp64.hpp"
+
+#include "numeric/ivec.hpp"
