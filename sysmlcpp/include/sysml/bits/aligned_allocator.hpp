@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "aligned_alloc.hpp"
+#include "sysml/bits/aligned_alloc.hpp"
 
 #include <cassert>
 #include <cstdlib>

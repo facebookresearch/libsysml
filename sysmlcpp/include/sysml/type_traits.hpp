@@ -10,19 +10,34 @@
 namespace sysml
 {
 
-template <typename...>
+template <class...>
 struct all_are_same : std::true_type
 {
 };
 
-template <typename First, typename Second, typename... Rest>
+template <class First, class Second, class... Rest>
 struct all_are_same<First, Second, Rest...>
     : std::integral_constant<bool, std::is_same_v<First, Second> &&
                                        all_are_same<Second, Rest...>::value>
 {
 };
 
-template <typename... Ts>
+template <class... Ts>
 constexpr bool all_are_same_v = all_are_same<Ts...>::value;
+
+template <class...>
+struct is_any_of : std::false_type
+{
+};
+
+template <class First, class Second, class... Rest>
+struct is_any_of<First, Second, Rest...>
+    : std::integral_constant<bool, std::is_same_v<First, Second> ||
+                                       is_any_of<First, Rest...>::value>
+{
+};
+
+template <class... Ts>
+constexpr bool is_any_of_v = is_any_of<Ts...>::value;
 
 } // namespace sysml
