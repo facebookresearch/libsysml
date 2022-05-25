@@ -15,7 +15,7 @@ namespace sysml
 {
 
 template <unsigned ElementSize, bool IsSigned, unsigned NumElements>
-class alignas(ElementSize* NumElements) ivec
+class alignas((ElementSize) * (NumElements)) ivec
 {
 private:
     static constexpr bool is_powerof2(unsigned v)
