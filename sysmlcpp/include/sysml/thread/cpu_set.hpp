@@ -98,7 +98,7 @@ inline void bind_to_core(int core)
 #    include <memory>
 #    include <thread>
 
-namespace dabun::thread
+namespace sysml::thread
 {
 
 class cpu_set
@@ -164,6 +164,6 @@ inline void set_affinity(cpu_set const&) {}
 
 inline void bind_to_core(int) {}
 
-} // namespace dabun::thread
+} // namespace sysml::thread
 
 #endif
