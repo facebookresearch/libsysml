@@ -8,7 +8,7 @@
 namespace sysml
 {
 
-using fp32 = float;
-static_assert(sizeof(fp32) == 4);
+using fp32_t = float;
+static_assert(sizeof(fp32_t) == 4);
 
 } // namespace sysml

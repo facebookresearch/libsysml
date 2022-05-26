@@ -36,8 +36,8 @@ operator<<(std::basic_ostream<CharT, Traits>& os, _Float16 v)
 namespace sysml
 {
 
-using fp16 = SYSML_FLOAT16_TYPE;
-static_assert(sizeof(fp16) == 2);
+using fp16_t = SYSML_FLOAT16_TYPE;
+static_assert(sizeof(fp16_t) == 2);
 
 } // namespace sysml
 

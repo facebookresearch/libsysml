@@ -8,7 +8,7 @@
 namespace sysml
 {
 
-using fp64 = double;
-static_assert(sizeof(fp64) == 8);
+using fp64_t = double;
+static_assert(sizeof(fp64_t) == 8);
 
 } // namespace sysml

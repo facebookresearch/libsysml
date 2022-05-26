@@ -197,6 +197,8 @@ operator<<(std::basic_ostream<CharT, Traits>&       os,
     return os;
 }
 
+namespace ivec_specializations
+{
 using int8x2_t  = ivec<1, true, 2>;
 using uint8x2_t = ivec<1, false, 2>;
 
@@ -214,5 +216,8 @@ using uint16x4_t = ivec<2, false, 4>;
 
 using int32x2_t  = ivec<4, true, 2>;
 using uint32x2_t = ivec<4, false, 2>;
+} // namespace ivec_specializations
+
+using namespace ivec_specializations;
 
 } // namespace sysml
