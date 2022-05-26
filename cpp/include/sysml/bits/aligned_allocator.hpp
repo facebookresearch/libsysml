@@ -109,7 +109,7 @@ public:
                 "aligned_allocator<T>::allocate() - Integer overflow.");
         }
 
-        auto pv = aligned_alloc(Alignment, n * sizeof(T));
+        auto pv = aligned_allocate(Alignment, n * sizeof(T));
 
         // Allocators should throw std::bad_alloc in the case of memory
         // allocation failure.

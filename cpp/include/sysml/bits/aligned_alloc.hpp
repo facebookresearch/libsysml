@@ -15,7 +15,7 @@ namespace sysml
 namespace detail
 {
 
-inline void* aligned_alloc_impl(std::size_t alignment, std::size_t size)
+inline void* aligned_allocate_impl(std::size_t alignment, std::size_t size)
 {
     // Workaround c++17 alligned_alloc (will get it from C11's stdlib.h header
     // otherwise);
@@ -26,14 +26,14 @@ inline void* aligned_alloc_impl(std::size_t alignment, std::size_t size)
 
 } // namespace detail
 
-inline void* aligned_alloc(std::size_t alignment, std::size_t size)
+inline void* aligned_allocate(std::size_t alignment, std::size_t size)
 {
-    return detail::aligned_alloc_impl(alignment, size);
+    return detail::aligned_allocate_impl(alignment, size);
 }
 
-inline void* checked_aligned_alloc(std::size_t alignment, std::size_t size)
+inline void* checked_aligned_allocate(std::size_t alignment, std::size_t size)
 {
-    auto ret = aligned_alloc(size, alignment);
+    auto ret = aligned_allocate(size, alignment);
 
     if (!ret)
     {
