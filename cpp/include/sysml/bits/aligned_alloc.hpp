@@ -33,7 +33,7 @@ inline void* aligned_allocate(std::size_t alignment, std::size_t size)
 
 inline void* checked_aligned_allocate(std::size_t alignment, std::size_t size)
 {
-    auto ret = aligned_allocate(size, alignment);
+    auto ret = aligned_allocate(alignment, size);
 
     if (!ret)
     {
