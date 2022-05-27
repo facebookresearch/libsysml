@@ -1,0 +1,4 @@
+[submodule "cpp/extern/Catch2"]
+	path = cpp/extern/Catch2
+	url = https://github.com/catchorg/Catch2
+	branch = v2.x
