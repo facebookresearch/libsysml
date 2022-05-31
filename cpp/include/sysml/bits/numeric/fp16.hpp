@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "bits/fp16/detect.hpp"
+#include "sysml/bits/numeric/fp16/detect.hpp"
 
 #if defined(SYSML_HAS___Float16)
 
@@ -27,17 +27,27 @@ operator<<(std::basic_ostream<CharT, Traits>& os, _Float16 v)
 
 #else
 
-#    include "bits/fp16/half.hpp"
+#    include "sysml/bits/numeric/fp16/half.hpp"
 
 #    define SYSML_FLOAT16_TYPE half_float::half
 
 #endif
+
+#include <type_traits>
 
 namespace sysml
 {
 
 using fp16_t = SYSML_FLOAT16_TYPE;
 static_assert(sizeof(fp16_t) == 2);
+
+template <typename>
+struct is_arithmetic;
+
+template <>
+struct is_arithmetic<fp16_t> : std::true_type
+{
+};
 
 } // namespace sysml
 

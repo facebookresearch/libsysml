@@ -5,8 +5,10 @@
 
 #pragma once
 
-#include "numeric/fp16.hpp"
-#include "numeric/fp32.hpp"
-#include "numeric/fp64.hpp"
+#include "sysml/bits/numeric/fp16.hpp"
+#include "sysml/bits/numeric/fp32.hpp"
+#include "sysml/bits/numeric/fp64.hpp"
 
-#include "numeric/ivec.hpp"
+#include "sysml/bits/numeric/ivec.hpp"
+
+#include "sysml/bits/arithmetic.hpp"

@@ -5,11 +5,12 @@
 
 #pragma once
 
-#include "sysml/numeric/integer.hpp"
+#include "sysml/bits/numeric/integer.hpp"
 #include "sysml/type_traits.hpp"
 
 #include <cassert>
 #include <cstddef>
+#include <type_traits>
 
 namespace sysml
 {
@@ -219,5 +220,13 @@ using uint32x2_t = ivec<4, false, 2>;
 } // namespace ivec_specializations
 
 using namespace ivec_specializations;
+
+template <typename>
+struct is_arithmetic;
+
+template <unsigned ElementSize, bool IsSigned, unsigned NumElements>
+struct is_arithmetic<ivec<ElementSize, IsSigned, NumElements>> : std::true_type
+{
+};
 
 } // namespace sysml
