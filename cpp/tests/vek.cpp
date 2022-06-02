@@ -1,10 +1,70 @@
 #include <catch2/catch.hpp>
 
+#include "sysml/ndloop.hpp"
 #include "sysml/numeric.hpp"
 #include "sysml/vek.hpp"
 
+#include <sstream>
 #include <tuple>
 #include <type_traits>
+
+TEST_CASE("ndloop-0", "[single-file]")
+{
+    int me[2][3][4];
+
+    using namespace sysml;
+
+    vek<int, 3> range{2, 3, 4};
+    ndloop(range, [&](auto const& v) { me[v[0]][v[1]][v[2]] = 0xdeadbeef; });
+
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 3; ++j)
+            for (int k = 0; k < 4; ++k)
+                CHECK(me[i][j][k] == 0xdeadbeef);
+
+    vek<int, 3> from{1, 1, 1};
+    ndloop(from, range, [&](auto const& v) { ++me[v[0]][v[1]][v[2]]; });
+
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 3; ++j)
+            for (int k = 0; k < 4; ++k)
+            {
+                if (i == 0 || j == 0 || k == 0)
+                {
+                    CHECK(me[i][j][k] == 0xdeadbeef);
+                }
+                else
+                {
+                    CHECK(me[i][j][k] == 0xdeadbeef + 1);
+                }
+            }
+
+    ndloop(range, [&](auto a, auto b, auto c) { me[a][b][c] = 0x12341234; });
+
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 3; ++j)
+            for (int k = 0; k < 4; ++k)
+                CHECK(me[i][j][k] == 0x12341234);
+
+
+    ndloop(from, range, [&](auto i, auto j, auto k) { ++me[i][j][k]; });
+
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 3; ++j)
+            for (int k = 0; k < 4; ++k)
+            {
+                if (i == 0 || j == 0 || k == 0)
+                {
+                    CHECK(me[i][j][k] == 0x12341234);
+                }
+                else
+                {
+                    CHECK(me[i][j][k] == 0x12341234 + 1);
+                }
+            }
+
+
+}
 
 TEST_CASE("vek-1", "[single-file]")
 {
@@ -17,10 +77,70 @@ TEST_CASE("vek-1", "[single-file]")
     CHECK(w == -z);
 
     {
+        using sysml::vek;
+        vek<int, 3> a{1, 2, 3};
+
+        {
+            vek<int, 3>        a{1, 2, 3};
+            std::array<int, 3> x{1, 1, 1};
+            auto               b = a;
+            a += x;
+            CHECK(a == b + x);
+        }
+
+        {
+            std::ostringstream oss;
+            oss << a;
+            CHECK(oss.str() == "1, 2, 3");
+        }
+
+        {
+            std::ostringstream oss;
+            oss << formatted(a, "", ", ", "");
+            CHECK(oss.str() == "1, 2, 3");
+        }
+
+        {
+            std::ostringstream oss;
+            auto               b = ++a;
+            b++;
+            oss << formatted(std::move(b), "[", ";", "]");
+            CHECK(oss.str() == "[3;4;5]");
+        }
+
+        {
+            std::stringstream iss("1, 2, 3");
+            vek<int, 3>       gold{1, 2, 3};
+            vek<int, 3>       a;
+            CHECK(iss >> a);
+            CHECK(a == gold);
+        }
+        {
+            std::stringstream iss("<1, 2, 3>");
+            vek<int, 3>       gold{1, 2, 3};
+            vek<int, 3>       a;
+            CHECK(iss >> formatted(a, "<", ",", ">"));
+            CHECK(a == gold);
+        }
+    }
+
+    {
         using namespace sysml;
 
         vek<int, 3> a{1, 2, 3};
-        float b = 3;
+        vek<int, 3> b{2, 3, 4};
+
+        CHECK(++a == b);
+        CHECK(a++ == b);
+        CHECK(--a == b);
+        CHECK(a-- == b);
+    }
+
+    {
+        using namespace sysml;
+
+        vek<int, 3> a{1, 2, 3};
+        float       b = 3;
 
         auto c = a + b;
         CHECK(c[0] == 4);
@@ -47,13 +167,15 @@ TEST_CASE("vek1", "[single-file]")
     CHECK(std::tuple_size_v<sysml::vek<int, 3>> == 3);
     CHECK(std::is_same_v<std::tuple_element_t<0, sysml::vek<int, 3>>, int>);
 
-    CHECK(
-        sysml::helpers::is_plus_equal_compound_assignable<int,
-                                                          float const&>::value);
-    CHECK(sysml::helpers::is_plus_equal_compound_assignable<int, long>::value);
+    // CHECK(
+    //     sysml::helpers::is_plus_equal_compound_assignable<int,
+    //                                                       float
+    //                                                       const&>::value);
+    // CHECK(sysml::helpers::is_plus_equal_compound_assignable<int,
+    // long>::value);
 
-    CHECK(sysml::helpers::is_minus_equal_compound_assignable<
-          int, float const&>::value);
+    // CHECK(sysml::helpers::is_minus_equal_compound_assignable<
+    //       int, float const&>::value);
 }
 
 TEST_CASE("to_vek", "[single-file]")
@@ -66,8 +188,8 @@ TEST_CASE("to_vek", "[single-file]")
 
     {
         std::array<int, 4> a{1, 2, 3, 4};
-        auto x = sysml::to_vek(a);
-        auto y = sysml::to_vek(std::move(a));
+        auto               x = sysml::to_vek(a);
+        auto               y = sysml::to_vek(std::move(a));
         CHECK(x == y);
     }
 
@@ -75,7 +197,7 @@ TEST_CASE("to_vek", "[single-file]")
 
     {
         auto goldc = gold;
-        auto c = sysml::vek_cast<long long>(goldc);
+        auto c     = sysml::vek_cast<long long>(goldc);
         CHECK(c == gold);
     }
 
@@ -112,22 +234,23 @@ TEST_CASE("to_vek", "[single-file]")
     CHECK(std::is_same_v<int, decltype(std::declval<int const&>() +
                                        std::declval<int const&>())>);
 
-    CHECK(sysml::helpers::is_plus_operable_from<int, short>::value);
-    CHECK(sysml::helpers::is_minus_operable_from<int, short>::value);
-    CHECK(sysml::helpers::is_times_operable_from<int, short>::value);
-    CHECK(sysml::helpers::is_div_operable_from<int, short>::value);
-    CHECK(sysml::helpers::is_mod_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_plus_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_minus_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_times_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_div_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_mod_operable_from<int, short>::value);
 
-    CHECK(sysml::helpers::is_band_operable_from<int, short>::value);
-    CHECK(sysml::helpers::is_bor_operable_from<int, short>::value);
-    CHECK(sysml::helpers::is_bxor_operable_from<int, short>::value);
-    CHECK(sysml::helpers::is_bshl_operable_from<int, short>::value);
-    CHECK(sysml::helpers::is_bshr_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_band_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_bor_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_bxor_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_bshl_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_bshr_operable_from<int, short>::value);
 
-    CHECK(sysml::helpers::is_land_operable_from<int, short>::value);
-    CHECK(sysml::helpers::is_lor_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_land_operable_from<int, short>::value);
+    // CHECK(sysml::helpers::is_lor_operable_from<int, short>::value);
 
-    CHECK(std::is_same_v<sysml::helpers::result_of_plus_from_t<int, int>, int>);
+    // CHECK(std::is_same_v<sysml::helpers::result_of_plus_from_t<int, int>,
+    // int>);
 
     //     CHECK(b[0] == 3);
     //     CHECK(b[1] == 4);

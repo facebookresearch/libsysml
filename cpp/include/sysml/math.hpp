@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "sysml/numeric.hpp"
 #include "sysml/workaround/cpp20.hpp"
 
 #include <type_traits>
@@ -40,6 +41,43 @@ constexpr inline auto num_iterations(T from, std::type_identity_t<T> to,
     -> std::enable_if_t<std::is_integral_v<T>, T>
 {
     return ceil_div(to - from, stride);
+}
+
+template <class T>
+constexpr inline std::uint64_t absolute_difference(T a, T b) noexcept
+    requires(is_integral_v<T>)
+{
+    if constexpr (sizeof(T) < sizeof(std::uint64_t))
+    {
+        auto diff = static_cast<std::int64_t>(a) - static_cast<std::int64_t>(a);
+        return diff > 0 ? diff : -diff;
+    }
+    else if constexpr (std::is_signed_v<T>)
+    {
+        using std::swap;
+        if (a < b) swap(a, b);
+
+        if (a > 0 && b < 0)
+        {
+            return static_cast<std::uint64_t>(a) +
+                   static_cast<std::uint64_t>(-b);
+        }
+        else
+        {
+            return a - b;
+        }
+    }
+    else // unsigned
+    {
+        return a > b ? a - b : b - a;
+    }
+}
+
+template <floating_point T>
+constexpr inline T absolute_difference(T a, T b) noexcept
+{
+    using std::abs;
+    return abs(a - b);
 }
 
 } // namespace sysml

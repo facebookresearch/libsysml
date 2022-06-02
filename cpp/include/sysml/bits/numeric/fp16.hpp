@@ -49,6 +49,14 @@ struct is_arithmetic<fp16_t> : std::true_type
 {
 };
 
+template <typename>
+struct is_floating_point;
+
+template <>
+struct is_floating_point<fp16_t> : std::true_type
+{
+};
+
 } // namespace sysml
 
 #undef SYSML_FLOAT16_TYPE

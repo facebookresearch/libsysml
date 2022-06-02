@@ -24,5 +24,3 @@ struct std::tuple_element<Idx, sysml::vek<Tp, Nm>>
     static_assert(Idx < Nm);
     using type = Tp;
 };
-
-} // namespace std

@@ -8,6 +8,7 @@
 #include "sysml/bits/arithmetic.hpp" // for sysml::arithmetic
 
 #include <algorithm>   // for std::fill_n, std::swap, std::swap_ranges
+#include <array>       // for std::array
 #include <cstddef>     // for std::size_t, std::ptrdiff_t
 #include <iterator>    // for std::reverse_iterator
 #include <stdexcept>   // for std::out_of_range
@@ -113,10 +114,10 @@ struct vek
         std::swap_ranges(begin(), end(), other.begin());
     }
 
-#define SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(OPER, NAME)                     \
+#define SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(OPER)  \
     template <arithmetic U>                                                    \
-    constexpr auto operator OPER(U v) noexcept->std::enable_if_t<              \
-        helpers::is_##NAME##_compound_assignable_v<Tp, U>, vek&>               \
+    requires requires(Tp a, U b) { a OPER b; }                                 \
+    constexpr vek& operator OPER(U v) noexcept                                 \
     {                                                                          \
         for (size_type i = 0; i < size(); ++i)                                 \
         {                                                                      \
@@ -126,9 +127,19 @@ struct vek
     }                                                                          \
                                                                                \
     template <arithmetic U>                                                    \
-    constexpr auto operator OPER(vek<U, Nm> const& v) noexcept                 \
-        ->std::enable_if_t<helpers::is_##NAME##_compound_assignable_v<Tp, U>,  \
-                           vek&>                                               \
+    requires requires(Tp a, U b) { a OPER b; }                                 \
+    constexpr vek& operator OPER(vek<U, Nm> const& v) noexcept                 \
+    {                                                                          \
+        for (size_type i = 0; i < size(); ++i)                                 \
+        {                                                                      \
+            elems_sysml_private_var_[i] OPER v[i];                             \
+        }                                                                      \
+        return *this;                                                          \
+    }                                                                          \
+                                                                               \
+    template <arithmetic U>                                                    \
+    requires requires(Tp a, U b) { a OPER b; }                                 \
+    constexpr vek& operator OPER(std::array<U, Nm> const& v) noexcept          \
     {                                                                          \
         for (size_type i = 0; i < size(); ++i)                                 \
         {                                                                      \
@@ -137,18 +148,59 @@ struct vek
         return *this;                                                          \
     }
 
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(+=, plus_equal)
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(-=, minus_equal)
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(*=, times_equal)
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(/=, div_equal)
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(%=, mod_equal)
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(&=, band_equal)
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(|=, bor_equal)
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(^=, bxor_equal)
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(<<=, bshl_equal)
-    SYSML_VEK_COMPOUND_OPERATOR_DEFINITION(>>=, bshr_equal)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(+=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(-=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(*=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(/=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(%=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(&=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(|=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(^=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(<<=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(>>=)
+    SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION(=)
 
-#undef SYSML_VEK_COMPOUND_OPERATOR_DEFINITION
+#undef SYSML_VEK_ASSIGNMENT_OR_COMPOUND_ASSIGNMENT_OPERATOR_DEFINITION
+
+    vek& operator++() noexcept requires requires(Tp x) { ++x; }
+    {
+        for (size_type i = 0; i < size(); ++i)
+        {
+            ++elems_sysml_private_var_[i];
+        }
+        return *this;
+    }
+
+    template <std::size_t... Idx>
+    vek postfix_plus_plus_private(std::index_sequence<Idx...>) noexcept
+    {
+        return {{elems_sysml_private_var_[Idx]++...}};
+    }
+
+    vek operator++(int) noexcept requires requires(Tp x) { x++; }
+    {
+        return postfix_plus_plus_private(std::make_index_sequence<Nm>{});
+    }
+
+    vek& operator--() noexcept requires requires(Tp x) { --x; }
+    {
+        for (size_type i = 0; i < size(); ++i)
+        {
+            --elems_sysml_private_var_[i];
+        }
+        return *this;
+    }
+
+    template <std::size_t... Idx>
+    vek postfix_minus_minus_private(std::index_sequence<Idx...>) noexcept
+    {
+        return {{elems_sysml_private_var_[Idx]--...}};
+    }
+
+    vek operator--(int) noexcept requires requires(Tp x) { x--; }
+    {
+        return postfix_minus_minus_private(std::make_index_sequence<Nm>{});
+    }
 };
 
 #if __cpp_deduction_guides >= 201606

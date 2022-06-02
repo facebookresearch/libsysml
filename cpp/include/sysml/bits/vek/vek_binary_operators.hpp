@@ -2,6 +2,8 @@
 
 #include "sysml/bits/vek/vek_struct.hpp"
 
+#include <array> // for std::array
+
 namespace sysml
 {
 
@@ -25,6 +27,26 @@ namespace vek_detail
               sizeof...(Idx)>                                                  \
     {                                                                          \
         return {{(lhs OPER rhs[Idx])...}};                                     \
+    }                                                                          \
+                                                                               \
+    template <arithmetic T, arithmetic U, std::size_t... Idx>                  \
+    constexpr auto vek_##NAME##_array(                                         \
+        vek<T, sizeof...(Idx)> const&        lhs,                              \
+        std::array<U, sizeof...(Idx)> const& rhs, std::index_sequence<Idx...>) \
+        ->vek<decltype(std::declval<T>() OPER std::declval<U>()),              \
+              sizeof...(Idx)>                                                  \
+    {                                                                          \
+        return {{(lhs[Idx] OPER rhs[Idx])...}};                                \
+    }                                                                          \
+                                                                               \
+    template <arithmetic T, arithmetic U, std::size_t... Idx>                  \
+    constexpr auto array_##NAME##_vek(                                         \
+        std::array<T, sizeof...(Idx)> const& lhs,                              \
+        vek<U, sizeof...(Idx)> const&        rhs, std::index_sequence<Idx...>) \
+        ->vek<decltype(std::declval<T>() OPER std::declval<U>()),              \
+              sizeof...(Idx)>                                                  \
+    {                                                                          \
+        return {{(lhs[Idx] OPER rhs[Idx])...}};                                \
     }                                                                          \
                                                                                \
     template <arithmetic T, arithmetic U, std::size_t... Idx>                  \
@@ -64,6 +86,22 @@ SYSML_VEK_DETAIL_DEFINE_VEK_BINARY_OPERATOR(>>, binary_shr)
     constexpr decltype(auto) operator OPER(T lhs, vek<U, Nm> const& rhs)       \
     {                                                                          \
         return vek_detail::value_##NAME##_vek(lhs, rhs,                        \
+                                              std::make_index_sequence<Nm>{}); \
+    }                                                                          \
+                                                                               \
+    template <arithmetic T, arithmetic U, std::size_t Nm>                      \
+    constexpr decltype(auto) operator OPER(std::array<T, Nm> const& lhs,       \
+                                           vek<U, Nm> const&        rhs)       \
+    {                                                                          \
+        return vek_detail::array_##NAME##_vek(lhs, rhs,                        \
+                                              std::make_index_sequence<Nm>{}); \
+    }                                                                          \
+                                                                               \
+    template <arithmetic T, arithmetic U, std::size_t Nm>                      \
+    constexpr decltype(auto) operator OPER(vek<T, Nm> const&        lhs,       \
+                                           std::array<U, Nm> const& rhs)       \
+    {                                                                          \
+        return vek_detail::vek_##NAME##_array(lhs, rhs,                        \
                                               std::make_index_sequence<Nm>{}); \
     }                                                                          \
                                                                                \
