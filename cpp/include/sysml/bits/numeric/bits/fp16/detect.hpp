@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "sysml/bits/numeric/fp16.hpp"
-#include "sysml/bits/numeric/fp32.hpp"
-#include "sysml/bits/numeric/fp64.hpp"
+#if defined(__aarch64__) && defined(__APPLE__) && defined(__clang__)
+#    define SYSML_HAS___Float16 1
+#endif
 
-#include "sysml/bits/numeric/ivec.hpp"
-
-#include "sysml/bits/arithmetic.hpp"
+#if defined(__aarch64__) && defined(__APPLE__) && defined(__GNUC__)
+#    define SYSML_HAS___fp16 1
+#endif
