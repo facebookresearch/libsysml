@@ -13,7 +13,7 @@ namespace sysml
 {
 
 template <arithmetic, std::size_t>
-class vek;
+struct vek;
 
 template <class>
 struct is_vek : std::false_type
@@ -29,19 +29,3 @@ template <class T>
 constexpr bool is_vek_v = is_vek<T>::value;
 
 } // namespace sysml
-
-
-
-// template <typename T>
-// struct vek_depth : std::integral_constant<std::size_t, 0>
-// {
-// };
-
-// template <typename Tp, std::size_t Nm>
-// struct vek_depth<vek<Tp, Nm>>
-//     : std::integral_constant<std::size_t, vek_depth<Tp>::value + 1>
-// {
-// };
-
-// template <typename T>
-// constexpr std::size_t vek_depth_v = vek_depth<T>::value;

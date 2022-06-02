@@ -1,3 +1,8 @@
+// Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved.
+//
+// This source code is licensed under the MIT license found in the
+// LICENSE file in the root directory of this source tree.
+
 #pragma once
 
 #include "sysml/bits/arithmetic.hpp" // for sysml::arithmetic
@@ -7,8 +12,6 @@
 #include <iterator>    // for std::reverse_iterator
 #include <stdexcept>   // for std::out_of_range
 #include <type_traits> // for std::is_nothrow_swappable, std::enable_if
-
-#include "sysml/bits/vek_helpers.hpp"
 
 namespace sysml
 {
@@ -72,11 +75,11 @@ struct vek
     constexpr reference       operator[](size_type n)       noexcept { return elems_sysml_private_var_[n]; }
     constexpr const_reference operator[](size_type n) const noexcept { return elems_sysml_private_var_[n]; }
 
-    constexpr reference       front(size_type n)       noexcept { return elems_sysml_private_var_[0]; }
-    constexpr const_reference front(size_type n) const noexcept { return elems_sysml_private_var_[0]; }
+    constexpr reference       front()       noexcept { return elems_sysml_private_var_[0]; }
+    constexpr const_reference front() const noexcept { return elems_sysml_private_var_[0]; }
 
-    constexpr reference       back(size_type n)       noexcept { return elems_sysml_private_var_[Nm - 1]; }
-    constexpr const_reference back(size_type n) const noexcept { return elems_sysml_private_var_[Nm - 1]; }
+    constexpr reference       back()       noexcept { return elems_sysml_private_var_[Nm - 1]; }
+    constexpr const_reference back() const noexcept { return elems_sysml_private_var_[Nm - 1]; }
 
     // clang-format on
 

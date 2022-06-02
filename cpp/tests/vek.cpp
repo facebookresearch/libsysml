@@ -34,6 +34,11 @@ TEST_CASE("vek-1", "[single-file]")
         // float z = 3;
         // auto w = z << 2;
         // CHECK(w == 3);
+
+        {
+            auto b = -a;
+            CHECK(b[0] == -1);
+        }
     }
 }
 

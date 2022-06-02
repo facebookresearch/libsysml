@@ -12,4 +12,4 @@
 #include "sysml/bits/vek/vek_cast.hpp"
 #include "sysml/bits/vek/vek_comparisons.hpp"
 #include "sysml/bits/vek/vek_struct.hpp"
-// #include "sysml/bits/vek_helpers.hpp"
+#include "sysml/bits/vek/vek_unary_operators.hpp"
