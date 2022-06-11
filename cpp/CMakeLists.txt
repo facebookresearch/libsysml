@@ -8,6 +8,8 @@ set(SYSML_THIRDPARTY_DIR ${SYSML_BINARY_DIR}/extern)
 
 option(SYSML_BUILD_TESTS "Build SYSML tests" ON)
 
+option(SYSML_INCLUDE_CODE_GENERATOR "Include codegen (needs xbyak)" ON)
+
 project(sysmlcpp
   LANGUAGES CXX
   VERSION 0.1.0)
@@ -44,4 +46,23 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 #  add_subdirectory(extern/Catch2)
    add_subdirectory(tests)
   endif()
+endif()
+
+
+if (SYSML_INCLUDE_CODE_GENERATOR)
+  message(STATUS "CG CG CG")
+
+  FetchContent_Declare(
+    XByak
+    GIT_REPOSITORY https://github.com/herumi/xbyak
+    GIT_TAG        v6.60)
+
+  FetchContent_MakeAvailable(XByak)
+
+  FetchContent_Declare(
+    XByak_AARCH64
+    GIT_REPOSITORY https://github.com/zlateski/xbyak_aarch64)
+
+  FetchContent_MakeAvailable(XByak_AARCH64)
+
 endif()
