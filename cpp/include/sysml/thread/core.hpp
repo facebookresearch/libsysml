@@ -17,8 +17,7 @@
 namespace sysml::thread
 {
 
-#if 0
-    // ifdef __cpp_lib_hardware_interference_size
+#ifdef __cpp_lib_hardware_interference_size
 using std::hardware_constructive_interference_size;
 using std::hardware_destructive_interference_size;
 #else

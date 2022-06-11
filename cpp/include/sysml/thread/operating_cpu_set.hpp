@@ -201,7 +201,7 @@ public:
 
     bool in_spinning_mode() const { return !is_sleeping_; }
 
-    bool in_sleeping_mode() const { return !is_sleeping_; }
+    bool in_sleeping_mode() const { return is_sleeping_; }
 
     void execute(std::function<void()> const* kernels)
     {

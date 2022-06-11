@@ -7,7 +7,7 @@
 
 #include "sysml/bits/numeric/fp16/detect.hpp"
 
-#if defined(SYSML_HAS___Float16)
+#if defined(SYSML_HAS___Float16) && 0 // Real type
 
 #    include <ostream>
 
@@ -21,7 +21,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, _Float16 v)
 
 #    define SYSML_FLOAT16_TYPE _Float16
 
-#elif defined(SYSML_HAS___fp16)
+#elif defined(SYSML_HAS___fp16) // Storage type
 
 #    define SYSML_FLOAT16_TYPE __fp16
 

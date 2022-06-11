@@ -13,6 +13,13 @@ namespace vek_detail
 {
 
 template <arithmetic Tp, std::size_t... Idx>
+constexpr vek<Tp, sizeof...(Idx)>
+vek_from_raw_helper(Tp const* a, std::index_sequence<Idx...>)
+{
+    return {{a[Idx]...}};
+}
+
+template <arithmetic Tp, std::size_t... Idx>
 constexpr vek<Tp, sizeof...(Idx)> to_vek_helper(Tp (&a)[sizeof...(Idx)],
                                                 std::index_sequence<Idx...>)
 {
@@ -23,6 +30,14 @@ template <arithmetic Tp, std::size_t... Idx>
 constexpr vek<Tp, sizeof...(Idx)>
 to_vek_helper(std::array<Tp, sizeof...(Idx)> const& a,
               std::index_sequence<Idx...>)
+{
+    return {{a[Idx]...}};
+}
+
+template <arithmetic Tp, std::size_t... Idx>
+constexpr std::array<Tp, sizeof...(Idx)>
+vek_to_array_helper(vek<Tp, sizeof...(Idx)> const& a,
+                    std::index_sequence<Idx...>)
 {
     return {{a[Idx]...}};
 }
@@ -54,6 +69,18 @@ constexpr vek<Tp, Nm> to_vek(std::array<Tp, Nm> const& a) noexcept(
     static_assert(std::is_constructible_v<Tp, Tp&>);
 
     return vek_detail::to_vek_helper(a, std::make_index_sequence<Nm>{});
+}
+
+template <std::size_t Nm, arithmetic Tp>
+constexpr vek<Tp, Nm> vek_from_raw(Tp const* a)
+{
+    return vek_detail::vek_from_raw_helper(a, std::make_index_sequence<Nm>{});
+}
+
+template <arithmetic Tp, std::size_t Nm>
+constexpr std::array<Tp, Nm> to_array(vek<Tp, Nm> const& a) noexcept
+{
+    return vek_detail::vek_to_array_helper(a, std::make_index_sequence<Nm>{});
 }
 
 } // namespace sysml

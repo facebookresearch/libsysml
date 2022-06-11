@@ -1,5 +1,6 @@
 #include <catch2/catch.hpp>
 
+#include "sysml/ndarray.hpp"
 #include "sysml/ndloop.hpp"
 #include "sysml/numeric.hpp"
 #include "sysml/vek.hpp"
@@ -7,6 +8,107 @@
 #include <sstream>
 #include <tuple>
 #include <type_traits>
+
+TEST_CASE("ndarray-0", "[single-file]")
+{
+    std::vector<int>           v{0, 1, 2, 3, 4, 5, 6, 7, 8};
+    std::array<std::size_t, 2> shape{3, 3};
+
+    sysml::const_ndarray_ref<int, 2> nda(v.data(), shape);
+
+    CHECK(nda.strides()[0] == 3);
+    CHECK(nda.strides()[1] == 1);
+
+    for (int i = 0, idx = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            CHECK(nda[i][j] == idx++);
+
+    // {
+    //     auto const& sa = nda[0];
+    //     CHECK(sa.strides()[0] == 1);
+    // }
+}
+
+TEST_CASE("ndarray-1", "[single-file]")
+{
+    std::vector<int>           v{0, 1, 2, 3, 4, 5, 6, 7};
+    std::array<std::size_t, 3> shape{2, 2, 2};
+
+    sysml::const_ndarray_ref<int, 3> nda(v.data(), shape);
+
+    CHECK(nda.strides()[0] == 4);
+    CHECK(nda.strides()[1] == 2);
+    CHECK(nda.strides()[2] == 1);
+    CHECK(nda[0].strides()[0] == 2);
+    CHECK(nda[0].strides()[1] == 1);
+    CHECK(nda[0][0].strides()[0] == 1);
+
+    CHECK(nda[0][0][1] == 1);
+
+    for (int i = 0, idx = 0; i < 2; ++i)
+        for (int j = 0; j < 2; ++j)
+            for (int k = 0; k < 2; ++k, ++idx)
+            {
+                CHECK(nda[i][j].at(k) == idx);
+                CHECK(nda[{i, j, k}] == idx);
+                CHECK(nda.at({i, j, k}) == idx);
+            }
+}
+
+TEST_CASE("ndarray-2", "[single-file]")
+{
+    std::vector<int>           v{0, 1, 2, 3, 4, 5, 6, 7};
+    std::array<std::size_t, 3> shape{2, 2, 2};
+
+    sysml::const_ndarray_ref<int, 3> nda(v.data(), shape,
+                                         sysml::column_major_order);
+
+    CHECK(nda.strides()[0] == 1);
+    CHECK(nda.strides()[1] == 2);
+    CHECK(nda.strides()[2] == 4);
+    CHECK(nda[0].strides()[0] == 2);
+    CHECK(nda[0].strides()[1] == 4);
+    CHECK(nda[0][0].strides()[0] == 4);
+
+    CHECK(nda[1][0][0] == 1);
+
+    for (int i = 0, idx = 0; i < 2; ++i)
+        for (int j = 0; j < 2; ++j)
+            for (int k = 0; k < 2; ++k, ++idx)
+            {
+                CHECK(nda[k][j].at(i) == idx);
+                CHECK(nda[{k, j, i}] == idx);
+                CHECK(nda.at({k, j, i}) == idx);
+            }
+}
+
+TEST_CASE("random-0", "[single-file]")
+{
+    sysml::fp16_t a;
+    a = 3;
+    sysml::fp16_t b;
+    b = 3;
+
+    CHECK(a == b);
+
+    {
+        using namespace sysml;
+
+        vek<int, 3> a{1, 2, 3};
+        CHECK(vek_from_raw<3>(a.data()) == a);
+    }
+    // auto c = a - b;
+
+    // CHECK(std::is_same_v<float, decltype(c)>);
+
+    // CHECK(std::is_same_v<std::int64_t, decltype(std::declval<std::int64_t>()
+    // *
+    //                                             std::declval<std::uint64_t>())>);
+
+    // auto d = half_float::fabs(c);
+
+    // CHECK(std::is_same_v<float, decltype(d)>);
+}
 
 TEST_CASE("ndloop-0", "[single-file]")
 {
@@ -46,7 +148,6 @@ TEST_CASE("ndloop-0", "[single-file]")
             for (int k = 0; k < 4; ++k)
                 CHECK(me[i][j][k] == 0x12341234);
 
-
     ndloop(from, range, [&](auto i, auto j, auto k) { ++me[i][j][k]; });
 
     for (int i = 0; i < 2; ++i)
@@ -62,8 +163,6 @@ TEST_CASE("ndloop-0", "[single-file]")
                     CHECK(me[i][j][k] == 0x12341234 + 1);
                 }
             }
-
-
 }
 
 TEST_CASE("vek-1", "[single-file]")

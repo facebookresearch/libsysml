@@ -8,6 +8,7 @@
 #include "sysml/numeric.hpp"
 #include "sysml/workaround/cpp20.hpp"
 
+#include <cmath>
 #include <type_traits>
 
 namespace sysml
@@ -76,8 +77,15 @@ constexpr inline std::uint64_t absolute_difference(T a, T b) noexcept
 template <floating_point T>
 constexpr inline T absolute_difference(T a, T b) noexcept
 {
-    using std::abs;
-    return abs(a - b);
+    if constexpr (std::is_floating_point_v<T>)
+    {
+        return std::fabs(a - b);
+    }
+    else
+    {
+        // TODO(zi): better
+        return (a > b) ? (a - b) : (b - a);
+    }
 }
 
 } // namespace sysml
