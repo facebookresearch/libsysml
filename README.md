@@ -26,7 +26,7 @@ with fast primitives for `parallel_for` and barriers.
 
 ### Code generation
 
-An X86 codegenerator based on `xbyak` can be found in `sysml/code_generator/code_generator.hpp`.
+An X86_64/ARM64 codegenerator based on `xbyak`/`xbyak_aarch64` can be found in `sysml/code_generator/code_generator.hpp`.
 There are functions to simplify the use of generated functions, such as automatic `shared_ptr` wrapping and improved executable memory mapping.
 
 ### Fast N-dimensional Arrays
@@ -63,12 +63,22 @@ Fast stack-allocated arrays with the `vek.hpp` header:
 using namespace sysml;
 
 vek<int, 3> range{2, 3, 4};
+// Equivalent to three nested loops:
 ndloop(range, [&](auto const& v) { me[v[0]][v[1]][v[2]] = 0xdeadbeef; });
 
 for (int i = 0; i < 2; ++i)
     for (int j = 0; j < 3; ++j)
         for (int k = 0; k < 4; ++k)
             CHECK(me[i][j][k] == 0xdeadbeef);
+            
+// Alternatively:
+ndloop(range, [&](auto a, auto b, auto c) { me[a][b][c] = 0x12341234; });
+
+for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 3; ++j)
+        for (int k = 0; k < 4; ++k)
+            CHECK(me[i][j][k] == 0x12341234);
+
 ```
 
 ### Iteration
