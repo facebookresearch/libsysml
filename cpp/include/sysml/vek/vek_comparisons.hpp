@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "sysml/bits/vek/vek_struct.hpp"
+#include "sysml/vek/vek_struct.hpp"
 
 #include <algorithm>   // std::equal, std::lexicographical_compare
 #include <cstddef>     // for std::size_t

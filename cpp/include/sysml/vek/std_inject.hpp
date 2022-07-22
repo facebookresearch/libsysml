@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "sysml/bits/vek/vek_struct.hpp"
+#include "sysml/vek/vek_struct.hpp"
 
 #include <cstddef>     // for std::size_t
 #include <tuple>       // for std::tuple_size

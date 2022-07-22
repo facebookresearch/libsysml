@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "sysml/bits/ndarray/types.hpp"
+#include "sysml/ndarray/types.hpp"
 #include "sysml/vek.hpp"
 
 #include <array>       // for std::array

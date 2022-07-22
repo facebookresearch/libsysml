@@ -14,6 +14,11 @@
 #define SYSML_STRINGIFY_0(s) #s
 #define SYSML_STRINGIFY(s) SYSML_STRINGIFY_0(s)
 
+#define SYSML_CONCAT_0(a, b) a##b
+#define SYSML_CONCAT(a, b) SYSML_CONCAT_0(a, b)
+
+#define SYSML_UNIQUE_VARIABLE_NAME(base) SYSML_CONCAT(base, __COUNTER__)
+
 #define SYSML_STRONG_ASSERT(condition)                                         \
     if (!(condition))                                                          \
     {                                                                          \
@@ -23,8 +28,13 @@
     }                                                                          \
     static_cast<void>(0)
 
-namespace sysml
+namespace sysml::detail::assert
 {
+
+struct throw_when_checker
+{
+};
+
 template <class Exception>
 class throw_when
 {
@@ -48,17 +58,24 @@ public:
         return *this;
     }
 
-    ~throw_when() noexcept(false)
+    operator throw_when_checker()
     {
         if (should_throw_)
         {
             throw Exception(oss_.str());
         }
+        return {};
     }
 };
 
-#define SYSML_THROW_ASSERT(condition, e)                                       \
-    ::sysml::throw_when<e>(!(condition))                                       \
+} // namespace sysml::detail::assert
+
+#define SYSML_THROW_ASSERT_THIS_EXCEPTION(condition, e)                        \
+    [[maybe_unused]] ::sysml::detail::assert::throw_when_checker               \
+    SYSML_UNIQUE_VARIABLE_NAME(                                                \
+        sysml_throw_assert_this_exception_variable_number_) =                  \
+        ::sysml::detail::assert::throw_when<e>(!(condition))                   \
         << "[ file: " __FILE__ " line: " SYSML_STRINGIFY((__LINE__)) "]"
 
-} // namespace sysml
+#define SYSML_THROW_ASSERT(condition)                                          \
+    SYSML_THROW_ASSERT_THIS_EXCEPTION(condition, ::std::runtime_error)

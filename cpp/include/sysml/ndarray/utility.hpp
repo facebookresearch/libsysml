@@ -6,8 +6,8 @@
 #pragma once
 
 #include "sysml/assert.hpp"
-#include "sysml/bits/ndarray/fwd.hpp"
-#include "sysml/bits/ndarray/types.hpp"
+#include "sysml/ndarray/fwd.hpp"
+#include "sysml/ndarray/types.hpp"
 #include "sysml/type_traits.hpp"
 
 #include <algorithm>   // for std::copy_n
@@ -55,7 +55,8 @@ struct ndsubarray_accessor
         if constexpr (CheckThrow)
         {
             // TODO(zi) Add the message
-            SYSML_THROW_ASSERT(idx < shape[0], std::out_of_range);
+            SYSML_THROW_ASSERT_THIS_EXCEPTION(idx < shape[0],
+                                              std::out_of_range);
         }
 
         if constexpr (Nd == 1)
@@ -86,7 +87,8 @@ struct ndsubarray_accessor
             if constexpr (CheckThrow)
             {
                 // TODO(zi) Add the message
-                SYSML_THROW_ASSERT(location[i] < shape[i], std::out_of_range)
+                SYSML_THROW_ASSERT_THIS_EXCEPTION(location[i] < shape[i],
+                                                  std::out_of_range)
                     << "shape[" << i << "] = " << shape[i] << "; location[" << i
                     << "] = " << location[i];
             }

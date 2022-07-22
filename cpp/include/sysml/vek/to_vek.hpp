@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "sysml/bits/vek/vek_struct.hpp"
+#include "sysml/vek/vek_struct.hpp"
 
 #include <array>
 #include <type_traits> // for std::remove_cv, std::is_nothrow_convertibe, std::enable_if, std::is_convertible

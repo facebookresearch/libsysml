@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "sysml/bits/ndarray/algorithm.hpp"
-#include "sysml/bits/ndarray/base.hpp"
+#include "sysml/ndarray/algorithm.hpp"
+#include "sysml/ndarray/base.hpp"
 
 #include <concepts>
 #include <iostream>

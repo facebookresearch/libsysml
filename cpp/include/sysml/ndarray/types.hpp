@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <cstddef> // for std::size_t
 #include <concepts> // for std::convertible_to
+#include <cstddef>  // for std::size_t
 
 namespace sysml::ndarray_detail
 {

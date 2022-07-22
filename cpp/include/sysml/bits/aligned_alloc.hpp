@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "sysml/math.hpp"
+
 #include <cstddef>
 #include <cstdlib>
 #include <new>
@@ -15,25 +17,33 @@ namespace sysml
 namespace detail
 {
 
-inline void* aligned_allocate_impl(std::size_t alignment, std::size_t size)
+inline void* aligned_allocate_impl(std::size_t alignment, std::size_t size,
+                                   std::size_t padding = 0)
 {
     // Workaround c++17 alligned_alloc (will get it from C11's stdlib.h header
     // otherwise);
     using namespace std;
 
-    return aligned_alloc(alignment, size);
+    if (size == 0)
+    {
+        return nullptr;
+    }
+
+    return aligned_alloc(alignment, round_up(size + padding, alignment));
 }
 
 } // namespace detail
 
-inline void* aligned_allocate(std::size_t alignment, std::size_t size)
+inline void* aligned_allocate(std::size_t alignment, std::size_t size,
+                              std::size_t padding = 0)
 {
-    return detail::aligned_allocate_impl(alignment, size);
+    return detail::aligned_allocate_impl(alignment, size, padding);
 }
 
-inline void* checked_aligned_allocate(std::size_t alignment, std::size_t size)
+inline void* checked_aligned_allocate(std::size_t alignment, std::size_t size,
+                                      std::size_t padding = 0)
 {
-    auto ret = aligned_allocate(alignment, size);
+    auto ret = aligned_allocate(alignment, size, padding);
 
     if (!ret)
     {

@@ -5,7 +5,9 @@
 
 #pragma once
 
-#include "sysml/bits/ndarray/utility.hpp"
-#include "sysml/bits/ndarray/view.hpp"
-#include "sysml/bits/ndarray/proxy.hpp"
-#include "sysml/bits/ndarray/ref.hpp"
+#include "sysml/ndarray/descriptor.hpp"
+#include "sysml/ndarray/ndarray.hpp"
+#include "sysml/ndarray/proxy.hpp"
+#include "sysml/ndarray/ref.hpp"
+#include "sysml/ndarray/utility.hpp"
+#include "sysml/ndarray/view.hpp"

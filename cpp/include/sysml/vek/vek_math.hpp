@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "sysml/bits/vek/vek_struct.hpp"
+#include "sysml/vek/vek_struct.hpp"
 
 namespace sysml
 {

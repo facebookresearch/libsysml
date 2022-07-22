@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include "sysml/bits/vek/is_vek.hpp"
-#include "sysml/bits/vek/std_inject.hpp"
-#include "sysml/bits/vek/to_vek.hpp"
-#include "sysml/bits/vek/vek_binary_operators.hpp"
-#include "sysml/bits/vek/vek_cast.hpp"
-#include "sysml/bits/vek/vek_comparisons.hpp"
-#include "sysml/bits/vek/vek_math.hpp"
-#include "sysml/bits/vek/vek_ostream.hpp"
-#include "sysml/bits/vek/vek_struct.hpp"
-#include "sysml/bits/vek/vek_unary_operators.hpp"
+#include "sysml/vek/is_vek.hpp"
+#include "sysml/vek/std_inject.hpp"
+#include "sysml/vek/to_vek.hpp"
+#include "sysml/vek/vek_binary_operators.hpp"
+#include "sysml/vek/vek_cast.hpp"
+#include "sysml/vek/vek_comparisons.hpp"
+#include "sysml/vek/vek_math.hpp"
+#include "sysml/vek/vek_ostream.hpp"
+#include "sysml/vek/vek_struct.hpp"
+#include "sysml/vek/vek_unary_operators.hpp"

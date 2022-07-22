@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "sysml/bits/tensor/base.hpp"
-#include "sysml/bits/tensor/fwd.hpp"
+#include "sysml/tensor/base.hpp"
+#include "sysml/tensor/fwd.hpp"
 #include "sysml/vek.hpp"
 
 namespace sysml::ndarray_detail

@@ -22,7 +22,7 @@ namespace sysml
  * <http://blogs.msdn.com/b/vcblog/archive/2008/08/28/the-mallocator.aspx>
  *
  */
-template <typename T, std::size_t Alignment>
+template <typename T, std::size_t Alignment, std::size_t Padding = 0>
 class aligned_allocator
 {
 public:
@@ -51,7 +51,7 @@ public:
     template <typename U>
     struct rebind
     {
-        typedef aligned_allocator<U, Alignment> other;
+        typedef aligned_allocator<U, Alignment, Padding> other;
     };
 
     bool operator!=(const aligned_allocator& other) const
@@ -80,7 +80,7 @@ public:
     aligned_allocator(const aligned_allocator&) {}
 
     template <typename U>
-    aligned_allocator(const aligned_allocator<U, Alignment>&)
+    aligned_allocator(const aligned_allocator<U, Alignment, Padding>&)
     {
     }
 
@@ -109,7 +109,7 @@ public:
                 "aligned_allocator<T>::allocate() - Integer overflow.");
         }
 
-        auto pv = aligned_allocate(Alignment, n * sizeof(T));
+        auto pv = aligned_allocate(Alignment, n * sizeof(T), Padding);
 
         // Allocators should throw std::bad_alloc in the case of memory
         // allocation failure.
