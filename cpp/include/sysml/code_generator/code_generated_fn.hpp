@@ -119,7 +119,7 @@ private: // Weak dynamic fn support
 
 private: // Casting support
     template <class>
-    friend class dynamic_fn_cast_type;
+    friend struct dynamic_fn_cast_type;
 };
 
 template <class Signature>
@@ -132,7 +132,7 @@ private:
     using underlying_pointer = std::weak_ptr<void>;
 
 private:
-    underlying_pointer      ptr_  = nullptr;
+    underlying_pointer      ptr_{};
     std::optional<unsigned> size_ = std::nullopt;
 
 public:
@@ -252,7 +252,7 @@ public:
 
 private: // Casting support
     template <class>
-    friend class dynamic_fn_cast_type;
+    friend struct dynamic_fn_cast_type;
 
     unique_dynamic_fn(underlying_pointer&&           ptr,
                       std::optional<unsigned> const& size)
@@ -279,9 +279,9 @@ private:
 
 public:
     // Constructors
-    observed_dynamic_fn(void* ptr, std::function<void(void*)> const& deleter,
-                        std::optional<unsigned> size = std::nullopt) noexcept
-        : ptr_(ptr, deleter)
+    explicit observed_dynamic_fn(
+        void* ptr, std::optional<unsigned> size = std::nullopt) noexcept
+        : ptr_(ptr)
         , size_(size)
     {
     }
@@ -337,7 +337,7 @@ public:
 
 private: // Casting support
     template <class>
-    friend class dynamic_fn_cast_type;
+    friend struct dynamic_fn_cast_type;
 
     observed_dynamic_fn(underlying_pointer const&      ptr,
                         std::optional<unsigned> const& size)

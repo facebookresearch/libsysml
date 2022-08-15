@@ -9,6 +9,7 @@
 #include "sysml/workaround/cpp20.hpp"
 
 #include <cmath>
+#include <tuple>
 #include <type_traits>
 
 namespace sysml
