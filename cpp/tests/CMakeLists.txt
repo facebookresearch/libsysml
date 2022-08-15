@@ -29,6 +29,5 @@ function(sysml_test name)
 endfunction(sysml_test)
 
 sysml_test(vek)
-sysml_test(ndarray)
 sysml_test(numeric)
-sysml_test(smallvec)
+sysml_test(observed_ptr)

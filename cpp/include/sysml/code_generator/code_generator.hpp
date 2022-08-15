@@ -7,6 +7,7 @@
 
 #include "sysml/code_generator/code_generated_fn.hpp"
 #include "sysml/code_generator/memory_resource.hpp"
+#include "sysml/code_generator/protect.hpp"
 #include "sysml/code_generator/xbyak.hpp"
 
 #include <any>         // for std::any
@@ -100,7 +101,20 @@ private:
         std::size_t size = getSize() * sizeof(xbyak::buffer_type);
         auto        ptr  = allocator_adapter_base::release(
                     const_cast<xbyak::buffer_type*>(getCode()));
-        return T(ptr, size, get_deleter());
+
+        ::sysml::code_generator::protect(
+            ptr, size, ::sysml::code_generator::memory_protection_mode::re);
+
+        return T(
+            ptr,
+            [deleter = get_deleter(), size](void* p)
+            {
+                ::sysml::code_generator::protect(
+                    p, size,
+                    ::sysml::code_generator::memory_protection_mode::rw);
+                deleter(p);
+            },
+            size);
     }
 
 #if defined(SYSML_CODE_GENERATOR_ARCHITECTURE_AARCH64)
@@ -164,25 +178,25 @@ public:
     }
 
     template <class Signature>
-    unique_code_generated_fn<Signature> get_unique_fn() &&
+    unique_dynamic_fn<Signature> get_unique_fn() &&
     {
-        return get_unique_or_shared<unique_code_generated_fn<Signature>>();
+        return get_unique_or_shared<unique_dynamic_fn<Signature>>();
     }
 
     template <class Signature>
-    shared_code_generated_fn<Signature> get_shared_fn() &&
+    shared_dynamic_fn<Signature> get_shared_fn() &&
     {
-        return get_unique_or_shared<shared_code_generated_fn<Signature>>();
+        return get_unique_or_shared<shared_dynamic_fn<Signature>>();
     }
 
     template <class Signature>
-    code_generated_fn_ref<Signature> get_reference_fn() &&
+    observed_dynamic_fn<Signature> get_observed_fn() &&
     {
         assert(allocator_adapter_base::is_inplace());
         ready();
         std::size_t size = getSize() * sizeof(xbyak::buffer_type);
         auto        ptr  = const_cast<xbyak::buffer_type*>(getCode());
-        return code_generated_fn_ref<Signature>(ptr, size);
+        return observed_dynamic_fn<Signature>(ptr, size);
     }
 };
 
@@ -202,22 +216,22 @@ public:
     {
     }
 
-    unique_code_generated_fn<signature_type> get_unique() &&
+    unique_dynamic_fn<signature_type> get_unique() &&
     {
         basic_code_generator* base = this;
         return std::move(*base).template get_unique_fn<signature_type>();
     }
 
-    shared_code_generated_fn<signature_type> get_shared() &&
+    shared_dynamic_fn<signature_type> get_shared() &&
     {
         basic_code_generator* base = this;
         return std::move(*base).template get_shared_fn<signature_type>();
     }
 
-    code_generated_fn_ref<signature_type> get_reference() &&
+    observed_dynamic_fn<signature_type> get_reference() &&
     {
         basic_code_generator* base = this;
-        return std::move(*base).template get_reference_fn<signature_type>();
+        return std::move(*base).template get_observed_fn<signature_type>();
     }
 };
 
@@ -238,19 +252,19 @@ private:
     }
 
 public:
-    unique_code_generated_fn<signature_type> get_unique() &&
+    unique_dynamic_fn<signature_type> get_unique() &&
     {
         return std::move(self()).template get_unique_fn<signature_type>();
     }
 
-    shared_code_generated_fn<signature_type> get_shared() &&
+    shared_dynamic_fn<signature_type> get_shared() &&
     {
         return std::move(self()).template get_shared_fn<signature_type>();
     }
 
-    code_generated_fn_ref<signature_type> get_reference() &&
+    observed_dynamic_fn<signature_type> get_reference() &&
     {
-        return std::move(self()).template get_reference_fn<signature_type>();
+        return std::move(self()).template get_observed_fn<signature_type>();
     }
 };
 

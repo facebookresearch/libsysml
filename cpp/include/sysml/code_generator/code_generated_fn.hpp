@@ -5,403 +5,403 @@
 
 #pragma once
 
-#include <sysml/code_generator/predef.hpp>
-#include <sysml/code_generator/protect.hpp>
+#include "sysml/memory.hpp"
+
+#include <fstream>    // for std::ofstream
+#include <functional> // for std::function
+#include <memory>     // for std::shared_ptr
+#include <optional>   // for std::optional, std::nullopt
+#include <string>     // for std::string
+#include <utility>    // for std::exchange
+
+#include "sysml/code_generator/predef.hpp"
 
 #if defined(SYSML_CODE_GENERATOR_ARCHITECTURE_AMD64)
 #    define SYSML_CODE_GENERATOR_HAS_PERF_PROFILER
 #    include "sysml/code_generator/x86/codegen_perf.hpp"
 #endif
 
-#include <cstdint>
-#include <fstream>
-#include <functional>
-#include <memory>
-#include <string>
-#include <type_traits>
-#include <utility>
-
 namespace sysml::code_generator
 {
 
-// Forward decl
-class basic_code_generator;
+template <class SignatureTo>
+struct dynamic_fn_cast_type;
 
-template <typename Signature>
-class unique_code_generated_fn;
+template <class Signature>
+class weak_dynamic_fn;
 
-template <typename Signature>
-class weak_code_generated_fn;
+template <class Signature>
+class shared_dynamic_fn;
 
-template <typename Signature>
-class shared_code_generated_fn;
-
-template <typename Signature> // To be used with an inplace allocator
-class code_generated_fn_ref;  // that is manually managing the execution
-                              // priveleges
-
-struct code_generated_fn_cast_tag
-{
-};
-
-template <class To, class From>
-struct code_generated_fn_caster;
-
-template <class Deleter>
-class mprotect_deleter_wrapper
+template <class Ret, class... Args>
+class shared_dynamic_fn<Ret(Args...)>
 {
 private:
-    Deleter     deleter_;
-    std::size_t size_;
+    using underlying_pointer    = std::shared_ptr<void>;
+    using size_type             = unsigned;
+    using function_pointer_type = Ret (*)(Args...);
+
+private:
+    underlying_pointer      ptr_  = nullptr;
+    std::optional<unsigned> size_ = std::nullopt;
 
 public:
-    mprotect_deleter_wrapper() {}
-    explicit mprotect_deleter_wrapper(Deleter deleter, std::size_t size)
-        : deleter_(deleter)
+    using weak_type = weak_dynamic_fn<Ret(Args...)>;
+
+public:
+    // Constructors
+    template <class Deleter>
+    shared_dynamic_fn(void* ptr, Deleter&& deleter,
+                      std::optional<unsigned> size = std::nullopt) noexcept
+        : ptr_(ptr, std::forward<Deleter>(deleter))
         , size_(size)
     {
     }
+    // Erased b/c of the declaration above
+    shared_dynamic_fn() noexcept = default;
 
-    mprotect_deleter_wrapper(mprotect_deleter_wrapper const&) = default;
-    mprotect_deleter_wrapper&
-    operator=(mprotect_deleter_wrapper const&) = default;
-
-    void operator()(void* ptr) const
-    {
-        ::sysml::code_generator::protect(
-            ptr, size_, ::sysml::code_generator::memory_protection_mode::rw);
-        deleter_(ptr);
-    }
-};
-
-inline void mprotect_make_executable(void* buffer, std::size_t size)
-{
-    ::sysml::code_generator::protect(
-        buffer, size, ::sysml::code_generator::memory_protection_mode::re);
-}
-
-template <typename ReturnType, typename... Args>
-class unique_code_generated_fn<ReturnType(Args...)>
-{
-public:
-    using function_pointer_type = ReturnType (*)(Args...);
-
-private:
-    using deleter_type = mprotect_deleter_wrapper<std::function<void(void*)>>;
-
-    std::unique_ptr<void, deleter_type> executable_buffer_;
-    std::size_t                         size_ = 0;
-
-    friend class basic_code_generator;
-
-    template <typename Deleter>
-    unique_code_generated_fn(void* buffer, std::size_t size, Deleter deleter)
-        : executable_buffer_(buffer, deleter_type(deleter, size))
-        , size_(size)
-    {
-        ::sysml::code_generator::protect(
-            buffer, size, ::sysml::code_generator::memory_protection_mode::re);
-    }
-
-    template <class, class>
-    friend struct code_generated_fn_caster;
-
-    template <class>
-    friend class unique_code_generated_fn;
-
-    template <typename OtherSignature>
-    unique_code_generated_fn(unique_code_generated_fn<OtherSignature>&& other,
-                             code_generated_fn_cast_tag)
-    {
-        executable_buffer_ = std::move(other.executable_buffer_);
-        size_              = std::exchange(other.size_, 0);
-    }
+    // copy/move constructors/assignment operators default generated.
 
 public:
-    unique_code_generated_fn() noexcept {}
-
-    unique_code_generated_fn(unique_code_generated_fn const&) = delete;
-    unique_code_generated_fn&
-    operator=(unique_code_generated_fn const&) = delete;
-
-    unique_code_generated_fn(unique_code_generated_fn&& other) noexcept =
-        default;
-    unique_code_generated_fn&
-    operator=(unique_code_generated_fn&& other) noexcept = default;
-
-    function_pointer_type get() const
+    function_pointer_type get() const noexcept
     {
-        return reinterpret_cast<function_pointer_type>(
-            executable_buffer_.get());
+        return reinterpret_cast<function_pointer_type>(ptr_.get());
     }
 
-    ReturnType operator()(Args... args) const { return this->get()(args...); }
+    Ret operator()(Args... args) const noexcept { return get()(args...); }
 
-    explicit operator bool() const noexcept { return !!executable_buffer_; }
+    explicit operator bool() const noexcept { return !!ptr_; }
 
-    void save_to_file(std::string const& fname) const
+    void swap(shared_dynamic_fn& other) noexcept
     {
-        std::ofstream fout(fname.c_str(), std::ios::out | std::ios::binary);
-        fout.write(reinterpret_cast<char*>(executable_buffer_.get()), size_);
+        ptr_.swap(other.ptr_);
+        size_.swap(other.size_);
+    }
+
+    void reset() noexcept
+    {
+        ptr_.reset();
+        size_ = std::nullopt;
+    }
+
+    void save_to_file(std::string const& fname)
+    {
+        if (ptr_ && size_)
+        {
+            std::ofstream fout(fname.c_str(), std::ios::out | std::ios::binary |
+                                                  std::ios::trunc);
+            fout.write(reinterpret_cast<char*>(ptr_.get()), *size_);
+        }
     }
 
 #ifdef SYSML_CODE_GENERATOR_HAS_PERF_PROFILER
     void register_perf(std::string const& name = "")
     {
-        get_x86_profiler().set(name.c_str(), executable_buffer_.get(),
-                               (int)size_);
+        if (ptr_ && size_)
+        {
+            get_x86_profiler().set(name.c_str(), ptr_.get(),
+                                   static_cast<int>(*size_));
+        }
     }
 #else
     void register_perf(std::string const&) {}
 #endif
-};
 
-template <typename ReturnType, typename... Args>
-class shared_code_generated_fn<ReturnType(Args...)>
-{
-public:
-    using function_pointer_type = ReturnType (*)(Args...);
+private: // Weak dynamic fn support
+    friend weak_dynamic_fn<Ret(Args...)>;
 
-private:
-    std::shared_ptr<void> executable_buffer_;
-    std::size_t           size_ = 0;
-
-    friend class weak_code_generated_fn<ReturnType(Args...)>;
-
-    shared_code_generated_fn(std::weak_ptr<void> const& weak_buffer,
-                             std::size_t                size)
-        : executable_buffer_(weak_buffer.lock())
+    shared_dynamic_fn(underlying_pointer const&      ptr,
+                      std::optional<unsigned> const& size)
+        : ptr_(ptr)
         , size_(size)
     {
     }
 
-    friend class basic_code_generator;
-
-    template <typename Deleter>
-    shared_code_generated_fn(void* buffer, std::size_t size, Deleter deleter)
-        : executable_buffer_(buffer,
-                             mprotect_deleter_wrapper<Deleter>(deleter, size))
-        , size_(size)
-    {
-        ::sysml::code_generator::protect(
-            buffer, size, ::sysml::code_generator::memory_protection_mode::re);
-    }
-
-    template <class, class>
-    friend struct code_generated_fn_caster;
-
+private: // Casting support
     template <class>
-    friend class shared_code_generated_fn;
-
-    template <typename OtherSignature>
-    shared_code_generated_fn(shared_code_generated_fn<OtherSignature>&& other,
-                             code_generated_fn_cast_tag)
-    {
-        executable_buffer_ = std::move(other.executable_buffer_);
-        size_              = std::exchange(other.size_, 0);
-    }
-
-    template <typename OtherSignature>
-    shared_code_generated_fn(
-        shared_code_generated_fn<OtherSignature> const& other,
-        code_generated_fn_cast_tag)
-    {
-        executable_buffer_ = other.executable_buffer_;
-        size_              = other.size_;
-    }
-
-public:
-    shared_code_generated_fn() noexcept {}
-
-    shared_code_generated_fn(shared_code_generated_fn const& other) = default;
-    shared_code_generated_fn&
-    operator=(shared_code_generated_fn const& other)           = default;
-    shared_code_generated_fn(shared_code_generated_fn&& other) = default;
-    shared_code_generated_fn&
-    operator=(shared_code_generated_fn&& other) = default;
-
-    function_pointer_type get() const
-    {
-        return reinterpret_cast<function_pointer_type>(
-            executable_buffer_.get());
-    }
-
-    ReturnType operator()(Args... args) const { return this->get()(args...); }
-
-    explicit operator bool() const noexcept { return !!executable_buffer_; }
-
-    void save_to_file(std::string const& fname) const
-    {
-        std::ofstream fout(fname.c_str(), std::ios::out | std::ios::binary);
-        fout.write(reinterpret_cast<char*>(executable_buffer_.get()), size_);
-    }
-
-#ifdef SYSML_CODE_GENERATOR_HAS_PERF_PROFILER
-    void register_perf(std::string const& name = "")
-    {
-        get_x86_profiler().set(name.c_str(), executable_buffer_.get(),
-                               (int)size_);
-    }
-#else
-    void register_perf(std::string const&) {}
-#endif
+    friend class dynamic_fn_cast_type;
 };
 
-template <typename ReturnType, typename... Args>
-class weak_code_generated_fn<ReturnType(Args...)>
+template <class Signature>
+class weak_dynamic_fn;
+
+template <class Ret, class... Args>
+class weak_dynamic_fn<Ret(Args...)>
 {
-public:
-    using function_pointer_type = ReturnType (*)(Args...);
+private:
+    using underlying_pointer = std::weak_ptr<void>;
 
 private:
-    std::weak_ptr<void> weak_buffer_;
-    std::size_t         size_ = 0;
-
-    using matching_shared_fn = shared_code_generated_fn<ReturnType(Args...)>;
+    underlying_pointer      ptr_  = nullptr;
+    std::optional<unsigned> size_ = std::nullopt;
 
 public:
-    weak_code_generated_fn() noexcept {}
+    using shared_type = shared_dynamic_fn<Ret(Args...)>;
 
-    weak_code_generated_fn(weak_code_generated_fn const& other) = default;
-    weak_code_generated_fn&
-    operator=(weak_code_generated_fn const& other)         = default;
-    weak_code_generated_fn(weak_code_generated_fn&& other) = default;
-    weak_code_generated_fn& operator=(weak_code_generated_fn&& other) = default;
-
-    weak_code_generated_fn(matching_shared_fn const& shared)
-        : weak_buffer_(shared.executable_buffer_)
+public:
+    // Constructors
+    weak_dynamic_fn(shared_type const& shared) noexcept
+        : ptr_(shared.ptr_)
         , size_(shared.size_)
     {
     }
+    // Erased b/c of the declaration above
+    weak_dynamic_fn() noexcept = default;
 
-    weak_code_generated_fn& operator=(matching_shared_fn const& shared)
+    // copy/move constructors/assignment operators default generated.
+
+    weak_dynamic_fn& operator=(shared_type const& shared) noexcept
     {
-        weak_buffer_ = shared.executable_buffer_;
+        ptr_  = shared.ptr_;
+        size_ = shared.size_;
         return *this;
     }
 
-    matching_shared_fn lock() const noexcept
+public:
+    void swap(weak_dynamic_fn& other) noexcept
     {
-        return matching_shared_fn(weak_buffer_, size_);
+        ptr_.swap(other.ptr_);
+        size_.swap(other.size_);
+    }
+
+    void reset() noexcept
+    {
+        ptr_.reset();
+        size_ = std::nullopt;
+    }
+
+    shared_type lock() const noexcept
+    {
+        return shared_type(ptr_.lock(), size_);
     }
 };
 
-template <typename ReturnType, typename... Args>
-class code_generated_fn_ref<ReturnType(Args...)>
+template <class Signature>
+class unique_dynamic_fn;
+
+template <class Ret, class... Args>
+class unique_dynamic_fn<Ret(Args...)>
 {
-public:
-    using function_pointer_type = ReturnType (*)(Args...);
+private:
+    using underlying_pointer =
+        std::unique_ptr<void, std::function<void(void*)>>;
+    using size_type             = unsigned;
+    using function_pointer_type = Ret (*)(Args...);
 
 private:
-    void*       executable_buffer_ptr_ = nullptr;
-    std::size_t size_                  = 0;
+    underlying_pointer      ptr_  = nullptr;
+    std::optional<unsigned> size_ = std::nullopt;
 
-    friend class basic_code_generator;
-
-    explicit code_generated_fn_ref(void* buffer, std::size_t size) noexcept
-        : executable_buffer_ptr_(buffer)
+public:
+    // Constructors
+    unique_dynamic_fn(void* ptr, std::function<void(void*)> const& deleter,
+                      std::optional<unsigned> size = std::nullopt) noexcept
+        : ptr_(ptr, deleter)
         , size_(size)
     {
     }
+    // Erased b/c of the declaration above
+    unique_dynamic_fn() noexcept = default;
 
-    template <class, class>
-    friend struct code_generated_fn_caster;
-
-    template <class>
-    friend class code_generated_fn_ref;
-
-    template <typename OtherSignature>
-    code_generated_fn_ref(code_generated_fn_ref<OtherSignature> const& other,
-                          code_generated_fn_cast_tag)
-    {
-        executable_buffer_ptr_ = other.executable_buffer_ptr_;
-        size_                  = other.size_;
-    }
+    // copy/move constructors/assignment operators default generated.
 
 public:
-    code_generated_fn_ref() noexcept {}
-    code_generated_fn_ref(code_generated_fn_ref const&) noexcept = default;
-    code_generated_fn_ref&
-    operator=(code_generated_fn_ref const&) noexcept = default;
-
-    code_generated_fn_ref(code_generated_fn_ref&& other) noexcept = default;
-    code_generated_fn_ref&
-    operator=(code_generated_fn_ref&& other) noexcept = default;
-
     function_pointer_type get() const noexcept
     {
-        return reinterpret_cast<function_pointer_type>(executable_buffer_ptr_);
+        return reinterpret_cast<function_pointer_type>(ptr_.get());
     }
 
-    ReturnType operator()(Args... args) const { return this->get()(args...); }
+    Ret operator()(Args... args) const noexcept { return get()(args...); }
 
-    explicit operator bool() const noexcept { return executable_buffer_ptr_; }
+    explicit operator bool() const noexcept { return !!ptr_; }
 
-    void save_to_file(std::string const& fname) const
+    void swap(unique_dynamic_fn& other) noexcept
     {
-        std::ofstream fout(fname.c_str(), std::ios::out | std::ios::binary);
-        fout.write(reinterpret_cast<char*>(executable_buffer_ptr_), size_);
+        ptr_.swap(other.ptr_);
+        size_.swap(other.size_);
+    }
+
+    void reset() noexcept
+    {
+        ptr_.reset();
+        size_ = std::nullopt;
+    }
+
+    void save_to_file(std::string const& fname)
+    {
+        if (ptr_ && size_)
+        {
+            std::ofstream fout(fname.c_str(), std::ios::out | std::ios::binary |
+                                                  std::ios::trunc);
+            fout.write(reinterpret_cast<char*>(ptr_.get()), *size_);
+        }
     }
 
 #ifdef SYSML_CODE_GENERATOR_HAS_PERF_PROFILER
     void register_perf(std::string const& name = "")
     {
-        get_x86_profiler().set(name.c_str(), executable_buffer_ptr_,
-                               (int)size_);
+        if (ptr_ && size_)
+        {
+            get_x86_profiler().set(name.c_str(), ptr_.get(),
+                                   static_cast<int>(*size_));
+        }
     }
 #else
     void register_perf(std::string const&) {}
 #endif
+
+private: // Casting support
+    template <class>
+    friend class dynamic_fn_cast_type;
+
+    unique_dynamic_fn(underlying_pointer&&           ptr,
+                      std::optional<unsigned> const& size)
+        : ptr_(std::move(ptr))
+        , size_(size)
+    {
+    }
 };
 
-template <class RetTo, class... ArgsTo, class RetFrom, class... ArgsFrom>
-struct code_generated_fn_caster<RetTo(ArgsTo...),
-                                unique_code_generated_fn<RetFrom(ArgsFrom...)>>
+template <class Signature>
+class observed_dynamic_fn;
+
+template <class Ret, class... Args>
+class observed_dynamic_fn<Ret(Args...)>
 {
-    unique_code_generated_fn<RetTo(ArgsTo...)>
-    do_cast(unique_code_generated_fn<RetFrom(ArgsFrom...)>&& other)
+private:
+    using underlying_pointer    = sysml::observed_ptr<void>;
+    using size_type             = unsigned;
+    using function_pointer_type = Ret (*)(Args...);
+
+private:
+    underlying_pointer      ptr_  = nullptr;
+    std::optional<unsigned> size_ = std::nullopt;
+
+public:
+    // Constructors
+    observed_dynamic_fn(void* ptr, std::function<void(void*)> const& deleter,
+                        std::optional<unsigned> size = std::nullopt) noexcept
+        : ptr_(ptr, deleter)
+        , size_(size)
     {
-        return unique_code_generated_fn<RetTo(ArgsTo...)>(
-            std::move(other), code_generated_fn_cast_tag());
+    }
+    // Erased b/c of the declaration above
+    observed_dynamic_fn() noexcept = default;
+
+    // copy/move constructors/assignment operators default generated.
+
+public:
+    function_pointer_type get() const noexcept
+    {
+        return reinterpret_cast<function_pointer_type>(ptr_.get());
+    }
+
+    Ret operator()(Args... args) const noexcept { return get()(args...); }
+
+    explicit operator bool() const noexcept { return !!ptr_; }
+
+    void swap(observed_dynamic_fn& other) noexcept
+    {
+        ptr_.swap(other.ptr_);
+        size_.swap(other.size_);
+    }
+
+    void reset() noexcept
+    {
+        ptr_.reset();
+        size_ = std::nullopt;
+    }
+
+    void save_to_file(std::string const& fname)
+    {
+        if (ptr_ && size_)
+        {
+            std::ofstream fout(fname.c_str(), std::ios::out | std::ios::binary |
+                                                  std::ios::trunc);
+            fout.write(reinterpret_cast<char*>(ptr_.get()), *size_);
+        }
+    }
+
+#ifdef SYSML_CODE_GENERATOR_HAS_PERF_PROFILER
+    void register_perf(std::string const& name = "")
+    {
+        if (ptr_ && size_)
+        {
+            get_x86_profiler().set(name.c_str(), ptr_.get(),
+                                   static_cast<int>(*size_));
+        }
+    }
+#else
+    void register_perf(std::string const&) {}
+#endif
+
+private: // Casting support
+    template <class>
+    friend class dynamic_fn_cast_type;
+
+    observed_dynamic_fn(underlying_pointer const&      ptr,
+                        std::optional<unsigned> const& size)
+        : ptr_(ptr)
+        , size_(size)
+    {
     }
 };
 
-template <class RetTo, class... ArgsTo, class RetFrom, class... ArgsFrom>
-struct code_generated_fn_caster<RetTo(ArgsTo...),
-                                shared_code_generated_fn<RetFrom(ArgsFrom...)>>
+// Casting support
+template <class SignatureTo>
+struct dynamic_fn_cast_type
 {
-    shared_code_generated_fn<RetTo(ArgsTo...)>
-    do_cast(shared_code_generated_fn<RetFrom(ArgsFrom...)>&& other)
+    template <class SignatureFrom>
+    shared_dynamic_fn<SignatureTo>
+    operator()(shared_dynamic_fn<SignatureFrom> const& from) const noexcept
     {
-        return shared_code_generated_fn<RetTo(ArgsTo...)>(
-            std::move(other), code_generated_fn_cast_tag());
+        return shared_dynamic_fn<SignatureTo>(from.ptr_, from.size_);
     }
 
-    shared_code_generated_fn<RetTo(ArgsTo...)>
-    do_cast(shared_code_generated_fn<RetFrom(ArgsFrom...)> const& other)
+    template <class SignatureFrom>
+    unique_dynamic_fn<SignatureTo>
+    operator()(unique_dynamic_fn<SignatureFrom>&& from) const noexcept
     {
-        return shared_code_generated_fn<RetTo(ArgsTo...)>(
-            other, code_generated_fn_cast_tag());
+        return unique_dynamic_fn<SignatureTo>(std::move(from.ptr_), from.size_);
+    }
+
+    template <class SignatureFrom>
+    observed_dynamic_fn<SignatureTo>
+    operator()(observed_dynamic_fn<SignatureFrom> const& from) const noexcept
+    {
+        return observed_dynamic_fn<SignatureTo>(from.ptr_, from.size_);
     }
 };
 
-template <class RetTo, class... ArgsTo, class RetFrom, class... ArgsFrom>
-struct code_generated_fn_caster<RetTo(ArgsTo...),
-                                code_generated_fn_ref<RetFrom(ArgsFrom...)>>
+template <class To, class RetFrom, class... ArgsFrom>
+decltype(auto)
+dynamic_fn_cast(shared_dynamic_fn<RetFrom(ArgsFrom...)> const& from) noexcept
 {
-    code_generated_fn_ref<RetTo(ArgsTo...)>
-    do_cast(code_generated_fn_ref<RetFrom(ArgsFrom...)> const& other)
-    {
-        return code_generated_fn_ref<RetTo(ArgsTo...)>(
-            other, code_generated_fn_cast_tag());
-    }
-};
+    dynamic_fn_cast_type<To> caster;
+    return caster(from);
+}
 
+template <class To, class RetFrom, class... ArgsFrom>
+decltype(auto)
+dynamic_fn_cast(observed_dynamic_fn<RetFrom(ArgsFrom...)> const& from) noexcept
+{
+    dynamic_fn_cast_type<To> caster;
+    return caster(from);
+}
+
+template <class To, class RetFrom, class... ArgsFrom>
+decltype(auto)
+dynamic_fn_cast(unique_dynamic_fn<RetFrom(ArgsFrom...)>&& from) noexcept
+{
+    dynamic_fn_cast_type<To> caster;
+    return caster(std::move(from));
+}
+
+// TODO(zi) remove
 template <class To, class From>
 decltype(auto) code_generated_fn_cast(From&& from)
 {
-    code_generated_fn_caster<To, std::decay_t<From>> caster;
-    return caster.do_cast(std::forward<From>(from));
+    return dynamic_fn_cast<To>(std::forward<From>(from));
 }
 
 } // namespace sysml::code_generator
