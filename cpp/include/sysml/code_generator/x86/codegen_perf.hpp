@@ -42,8 +42,10 @@
 #    include <fcntl.h>
 #    include <iostream>
 #    include <string>
+#    include <sys/mman.h>
 #    include <sys/types.h>
 #    include <time.h>
+#    include <unistd.h>
 
 namespace sysml::code_generator
 {

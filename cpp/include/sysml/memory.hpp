@@ -7,3 +7,4 @@
 
 #include "sysml/bits/aligned_alloc.hpp"
 #include "sysml/bits/aligned_allocator.hpp"
+#include "sysml/bits/observed_ptr.hpp"
