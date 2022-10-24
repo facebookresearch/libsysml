@@ -45,6 +45,18 @@ constexpr inline auto num_iterations(T from, std::type_identity_t<T> to,
     return ceil_div(to - from, stride);
 }
 
+template <typename T>
+constexpr inline bool is_odd(T x) noexcept requires(is_integral_v<T>)
+{
+    return x & static_cast<T>(1);
+}
+
+template <typename T>
+constexpr inline bool is_even(T x) noexcept requires(is_integral_v<T>)
+{
+    return !is_odd(x);
+}
+
 template <class T>
 constexpr inline std::uint64_t absolute_difference(T a, T b) noexcept
     requires(is_integral_v<T>)

@@ -10,6 +10,7 @@
 #include "sysml/vek/to_vek.hpp"
 #include "sysml/vek/vek_binary_operators.hpp"
 #include "sysml/vek/vek_cast.hpp"
+#include "sysml/vek/vek_common_types.hpp"
 #include "sysml/vek/vek_comparisons.hpp"
 #include "sysml/vek/vek_math.hpp"
 #include "sysml/vek/vek_ostream.hpp"
