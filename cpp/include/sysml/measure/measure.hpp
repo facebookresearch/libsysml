@@ -151,14 +151,16 @@ double measure_mean_time_limited(Fn&& fn, unsigned iterations = 1,
 
     detail::warmup_run_time_limited(fn, warmup_iterations, seconds);
 
-    double total_time = 0.0;
+    double   total_time     = 0.0;
+    unsigned iterations_run = 0;
 
-    for (unsigned i = 0; i < iterations && total_time <= seconds; ++i)
+    for (; iterations_run < iterations && total_time <= seconds;
+         ++iterations_run)
     {
         total_time += detail::measure_single_run_seconds(fn);
     }
 
-    return total_time / iterations;
+    return total_time / iterations_run;
 }
 
 template <class Fn>
