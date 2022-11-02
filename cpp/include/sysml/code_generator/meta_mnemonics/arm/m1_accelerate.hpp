@@ -34,7 +34,7 @@ public:
         self().dw(build_amx_instruction(op, operand));
     }
 
-    void issue_amx_instruction(std::uint32_t op, Xbyak::XReg const& r)
+    void issue_amx_instruction(std::uint32_t op, xbyak::XReg const& r)
     {
         issue_amx_instruction(op, static_cast<std::uint32_t>(r.getIdx()));
     }
@@ -55,27 +55,27 @@ public:
         issue_amx_instruction(17, 1);
     }
 
-    void amxldx(Xbyak::XReg const& r) { issue_amx_instruction(0u, r); }
-    void amxldy(Xbyak::XReg const& r) { issue_amx_instruction(1u, r); }
-    void amxstx(Xbyak::XReg const& r) { issue_amx_instruction(2u, r); }
-    void amxsty(Xbyak::XReg const& r) { issue_amx_instruction(3u, r); }
-    void amxldz(Xbyak::XReg const& r) { issue_amx_instruction(4u, r); }
-    void amxstz(Xbyak::XReg const& r) { issue_amx_instruction(5u, r); }
-    void amxldzi(Xbyak::XReg const& r) { issue_amx_instruction(6u, r); }
-    void amxstzi(Xbyak::XReg const& r) { issue_amx_instruction(7u, r); }
+    void amxldx(xbyak::XReg const& r) { issue_amx_instruction(0u, r); }
+    void amxldy(xbyak::XReg const& r) { issue_amx_instruction(1u, r); }
+    void amxstx(xbyak::XReg const& r) { issue_amx_instruction(2u, r); }
+    void amxsty(xbyak::XReg const& r) { issue_amx_instruction(3u, r); }
+    void amxldz(xbyak::XReg const& r) { issue_amx_instruction(4u, r); }
+    void amxstz(xbyak::XReg const& r) { issue_amx_instruction(5u, r); }
+    void amxldzi(xbyak::XReg const& r) { issue_amx_instruction(6u, r); }
+    void amxstzi(xbyak::XReg const& r) { issue_amx_instruction(7u, r); }
 
     // TODO(ops 6-9)
 
-    void amxfma64(Xbyak::XReg const& r) { issue_amx_instruction(10u, r); }
-    void amxfms64(Xbyak::XReg const& r) { issue_amx_instruction(11u, r); }
+    void amxfma64(xbyak::XReg const& r) { issue_amx_instruction(10u, r); }
+    void amxfms64(xbyak::XReg const& r) { issue_amx_instruction(11u, r); }
 
-    void amxfma32(Xbyak::XReg const& r) { issue_amx_instruction(12u, r); }
-    void amxfms32(Xbyak::XReg const& r) { issue_amx_instruction(13u, r); }
+    void amxfma32(xbyak::XReg const& r) { issue_amx_instruction(12u, r); }
+    void amxfms32(xbyak::XReg const& r) { issue_amx_instruction(13u, r); }
 
-    void amxmac16(Xbyak::XReg const& r) { issue_amx_instruction(14u, r); }
+    void amxmac16(xbyak::XReg const& r) { issue_amx_instruction(14u, r); }
 
-    void amxfma16(Xbyak::XReg const& r) { issue_amx_instruction(15u, r); }
-    void amxfms16(Xbyak::XReg const& r) { issue_amx_instruction(16u, r); }
+    void amxfma16(xbyak::XReg const& r) { issue_amx_instruction(15u, r); }
+    void amxfms16(xbyak::XReg const& r) { issue_amx_instruction(16u, r); }
 
     // op17 is enable/disable
 };

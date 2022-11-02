@@ -13,6 +13,7 @@
 
 #include "arm/meta_mnemonics/stack.cpp"
 #include "arm/meta_mnemonics/large_imm.cpp"
+#include "arm/meta_mnemonics/m1_accelerate.cpp"
 
 #endif
 
