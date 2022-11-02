@@ -11,9 +11,10 @@
 
 #if defined(SYSML_CODE_GENERATOR_ARCHITECTURE_AARCH64)
 
-#include "arm/meta_mnemonics/stack.cpp"
-#include "arm/meta_mnemonics/large_imm.cpp"
-#include "arm/meta_mnemonics/vreg_transpose.cpp"
+#    include "arm/meta_mnemonics/large_imm.cpp"
+#    include "arm/meta_mnemonics/m1_accelerate.cpp"
+#    include "arm/meta_mnemonics/stack.cpp"
+#    include "arm/meta_mnemonics/vreg_transpose.cpp"
 
 #endif
 

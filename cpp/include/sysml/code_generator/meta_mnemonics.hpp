@@ -15,6 +15,7 @@
 #include "sysml/code_generator/meta_mnemonics/arm/stack.hpp"
 #include "sysml/code_generator/meta_mnemonics/arm/large_imm.hpp"
 #include "sysml/code_generator/meta_mnemonics/arm/vreg_transpose.hpp"
+#include "sysml/code_generator/meta_mnemonics/arm/m1_accelerate.hpp"
 
 #else
 #    error "Target architecture not supported by sysml::code_generator library"
